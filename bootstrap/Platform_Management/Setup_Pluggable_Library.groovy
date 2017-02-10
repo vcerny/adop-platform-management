@@ -17,16 +17,18 @@ setupPluggable.with {
         preBuildCleanup()
     }
     steps {
-        shell('''#!/bin/bash -ex
-mkdir -p $PLUGGABLE_SCM_PROVIDER_PROPERTIES_PATH $PLUGGABLE_SCM_PROVIDER_PATH
+        shell('''
+            #!/bin/bash -ex
+            mkdir -p $PLUGGABLE_SCM_PROVIDER_PROPERTIES_PATH $PLUGGABLE_SCM_PROVIDER_PATH
+            mkdir -p ${PLUGGABLE_SCM_PROVIDER_PROPERTIES_PATH}/CartridgeLoader ${PLUGGABLE_SCM_PROVIDER_PROPERTIES_PATH}/ScmProviders
 
-echo "Extracting Pluggable library to additonal classpath location: ${PLUGGABLE_SCM_PROVIDER_PATH}"
-cp -r src/main/groovy/pluggable/ ${PLUGGABLE_SCM_PROVIDER_PATH}
-echo "******************"
+            echo "Extracting Pluggable library to additonal classpath location: ${PLUGGABLE_SCM_PROVIDER_PATH}"
+            cp -r src/main/groovy/pluggable/ ${PLUGGABLE_SCM_PROVIDER_PATH}
+            echo "******************"
 
-echo "Library contents: "
-ls ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable/scm/
-''')
+            echo "Library contents: "
+            ls ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable/scm/
+        ''')
     }
     scm {
         git {
