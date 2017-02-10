@@ -45,7 +45,7 @@ loadCartridgeJob.with{
             choiceType('SINGLE_SELECT')
 			groovyScript {
 				script(
-					import hudson.model.*;
+					'''import hudson.model.*;
 					import hudson.util.*;
 
 					base_path = "/var/jenkins_home/userContent/datastore/pluggable/scm"
@@ -76,7 +76,7 @@ loadCartridgeJob.with{
 					}
 
 					return providerList;
-				)
+				''')
 			}
         }
         if (customScmNamespace == "true"){
