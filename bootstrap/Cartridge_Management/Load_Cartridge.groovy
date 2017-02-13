@@ -1,12 +1,3 @@
-// Dynamic values
-def customScmNamespace = "${CUSTOM_SCM_NAMESPACE}"
-String namespaceValue = null
-if (customScmNamespace == "true"){
-    namespaceValue = '"${SCM_NAMESPACE}"'
-} else {
-    namespaceValue = 'null'
-}
-
 // Jobs
 def generateLoadCartridgeJob = workflowJob("/Load_Cartridge")
 
@@ -15,6 +6,7 @@ generateLoadCartridgeJob.with {
     {
         stringParam("workspaceName","ExampleWorkspace","Name of the workspace to load cartridge in (either existing or new).")
         stringParam("projectName","ExampleProject","Name of the project to load cartridge in (either existing or new).")
+        booleanParam('CUSTOM_SCM_NAMESPACE', false, 'Enables the option to provide a custom project namespace for your SCM provider')
         activeChoiceParam('SCM_PROVIDER') {
             description('Your chosen SCM Provider and the appropriate cloning protocol')
             filterable()
@@ -88,7 +80,7 @@ generateLoadCartridgeJob.with {
 					'''.stripMargin())
             }
         }
-        if (customScmNamespace == "true"){
+        if ("${CUSTOM_SCM_NAMESPACE}" == "true"){
             stringParam('SCM_NAMESPACE', '', 'The namespace for your SCM provider which will prefix your created repositories')
         }
         extensibleChoiceParameterDefinition {
