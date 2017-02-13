@@ -145,8 +145,6 @@ generateLoadCartridgeJob.with {
     environmentVariables
     {
         groovy("return [SCM_KEY: org.apache.commons.lang.RandomStringUtils.randomAlphanumeric(20)]")
-        env('WORKSPACE_NAME',workspaceFolderName)
-        env('PROJECT_NAME',projectFolderName)
     }
     wrappers
     {
