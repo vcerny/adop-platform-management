@@ -1,3 +1,12 @@
+// Dynamic values
+def customScmNamespace = "${CUSTOM_SCM_NAMESPACE}"
+String namespaceValue = null
+if (customScmNamespace == "true"){
+    namespaceValue = '"${SCM_NAMESPACE}"'
+} else {
+    namespaceValue = 'null'
+}
+
 // Jobs
 def generateLoadCartridgeJob = workflowJob("/Load_Cartridge")
 
