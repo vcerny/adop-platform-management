@@ -80,7 +80,7 @@ generateLoadCartridgeJob.with {
 					'''.stripMargin())
             }
         }
-        if ("${CUSTOM_SCM_NAMESPACE}" == "true"){
+        if ('${CUSTOM_SCM_NAMESPACE}' == "true"){
             stringParam('SCM_NAMESPACE', '', 'The namespace for your SCM provider which will prefix your created repositories')
         }
         extensibleChoiceParameterDefinition {
