@@ -31,7 +31,7 @@ generateProjectJob.with {
         preBuildCleanup()
         injectPasswords()
         maskPasswords()
-        if("${ADOP_ACL_ENABLED}" == "")
+        if("${ADOP_ACL_ENABLED}" == "true")
         {
             environmentVariables
             {
@@ -40,11 +40,14 @@ generateProjectJob.with {
                 env('OU_PEOPLE','ou=people')
                 env('OUTPUT_FILE','output.ldif')
             }
-            credentialsBinding
+            if("${ADOP_LDAP_ENABLED}" == "true")
             {
-                usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
+                credentialsBinding
+                {
+                    usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
+                }
+                sshAgent("adop-jenkins-master")
             }
-            sshAgent("adop-jenkins-master")
         }
     }
     steps
