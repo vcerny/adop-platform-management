@@ -29,7 +29,8 @@ def loadCartridgeCollectionJob = workflowJob(cartridgeManagementFolderName + "/L
 
 // Setup Load_Cartridge
 loadCartridgeJob.with{
-    parameters{
+    parameters
+    {
         activeChoiceParam('SCM_PROVIDER') {
             description('Your chosen SCM Provider and the appropriate cloning protocol')
             filterable()
@@ -171,170 +172,179 @@ loadCartridgeJob.with{
         env('WORKSPACE_NAME',workspaceFolderName)
         env('PROJECT_NAME',projectFolderName)
     }
-    wrappers {
+    wrappers
+    {
         preBuildCleanup()
         injectPasswords()
         maskPasswords()
-        sshAgent("adop-jenkins-master")
-        credentialsBinding {
+        credentialsBinding
+        {
             file('SCM_SSH_KEY', 'adop-jenkins-private')
         }
     }
-    steps {
+    steps
+    {
         shell('''#!/bin/bash -ex
-
-# We trust everywhere
-echo -e "#!/bin/sh\nexec ssh -i ${SCM_SSH_KEY} -o StrictHostKeyChecking=no \"\\\$@\"\n" > ${WORKSPACE}/custom_ssh
-chmod +x ${WORKSPACE}/custom_ssh
-export GIT_SSH="${WORKSPACE}/custom_ssh"
-
-# Clone Cartridge
-git clone ${CARTRIDGE_CLONE_URL} cartridge
-
-# Find the cartridge
-export CART_HOME=$(dirname $(find -name metadata.cartridge | head -1))
-
-
-# Create temp directory for repositories
-mkdir ${WORKSPACE}/tmp
-
-# Copy pluggable SCM package into workspace
-mkdir ${WORKSPACE}/job_dsl_additional_classpath
-cp -r ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable $WORKSPACE/job_dsl_additional_classpath
-
-# Output SCM provider ID to a properties file
-echo SCM_PROVIDER_ID=$(echo ${SCM_PROVIDER} | cut -d "(" -f2 | cut -d ")" -f1) > scm_provider_id.properties
-echo GIT_SSH="${GIT_SSH}" >> scm_provider.properties
-
-
-# Provision one-time infrastructure
-if [ -d ${WORKSPACE}/${CART_HOME}/infra ]; then
-    cd ${WORKSPACE}/${CART_HOME}/infra
-    if [ -f provision.sh ]; then
-        source provision.sh
-    else
-        echo "INFO: ${CART_HOME}/infra/provision.sh not found"
-    fi
-fi
-
-# Generate Jenkins Jobs
-if [ -d ${WORKSPACE}/${CART_HOME}/jenkins/jobs ]; then
-    cd ${WORKSPACE}/${CART_HOME}/jenkins/jobs
-    if [ -f generate.sh ]; then
-        source generate.sh
-    else
-        echo "INFO: ${CART_HOME}/jenkins/jobs/generate.sh not found"
-    fi
-fi
-''')
-        environmentVariables {
+        # Create temp directory for repositories
+        mkdir ${WORKSPACE}/tmp
+        # Copy pluggable SCM package into workspace
+        mkdir ${WORKSPACE}/job_dsl_additional_classpath
+        cp -r ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable $WORKSPACE/job_dsl_additional_classpath
+        # Output SCM provider ID to a properties file
+        echo SCM_PROVIDER_ID=$(echo ${SCM_PROVIDER} | cut -d "(" -f2 | cut -d ")" -f1) > scm_provider_id.properties
+        ''')
+        environmentVariables
+        {
             propertiesFile('scm_provider_id.properties')
         }
-        systemGroovyCommand('''
-import jenkins.model.*
-import groovy.io.FileType
-
-def jenkinsInstace = Jenkins.instance
-def projectName = build.getEnvironment(listener).get('PROJECT_NAME')
-def mcfile = new FileNameFinder().getFileNames(build.getWorkspace().toString(), '**/metadata.cartridge')
-def xmlDir = new File(mcfile[0].substring(0, mcfile[0].lastIndexOf(File.separator))  + "/jenkins/jobs/xml")
-
-def fileList = []
-
-xmlDir.eachFileRecurse (FileType.FILES) { file ->
-    if(file.name.endsWith('.xml')) {
-        fileList << file
-    }
-}
-fileList.each {
-	String configPath = it.path
-  	File configFile = new File(configPath)
-    String configXml = configFile.text
-    ByteArrayInputStream xmlStream = new ByteArrayInputStream( configXml.getBytes() )
-    String jobName = configFile.getName().substring(0, configFile.getName().lastIndexOf('.'))
-
-    jenkinsInstace.getItem(projectName,jenkinsInstace).createProjectFromXML(jobName, xmlStream)
-}
-''')
         systemGroovyCommand('''import pluggable.scm.PropertiesSCMProviderDataStore
-import pluggable.scm.SCMProviderDataStore
-import pluggable.configuration.EnvVarProperty;
-import pluggable.scm.helpers.HelperUtils
-import java.util.Properties
-import hudson.FilePath
+            import pluggable.scm.SCMProviderDataStore
+            import pluggable.configuration.EnvVarProperty;
+            import pluggable.scm.helpers.HelperUtils
+            import java.util.Properties
+            import hudson.FilePath
 
 
-String scmProviderId = build.getEnvironment(listener).get('SCM_PROVIDER_ID')
-EnvVarProperty envVarProperty = EnvVarProperty.getInstance();
+            String scmProviderId = build.getEnvironment(listener).get('SCM_PROVIDER_ID')
+            EnvVarProperty envVarProperty = EnvVarProperty.getInstance();
 
 
-envVarProperty.setVariableBindings(build.getEnvironment(listener));
-SCMProviderDataStore scmProviderDataStore = new PropertiesSCMProviderDataStore();
-Properties scmProviderProperties = scmProviderDataStore.get(scmProviderId);
+            envVarProperty.setVariableBindings(build.getEnvironment(listener));
+            SCMProviderDataStore scmProviderDataStore = new PropertiesSCMProviderDataStore();
+            Properties scmProviderProperties = scmProviderDataStore.get(scmProviderId);
 
-// get credentials
+            // get credentials
 
-String credentialId = scmProviderProperties.get("loader.credentialId")
+            String credentialId = scmProviderProperties.get("loader.credentialId")
 
-credentialInfo = HelperUtils.extractPasswordCredentials(credentialId);
+            credentialInfo = HelperUtils.extractPasswordCredentials(credentialId);
 
-channel = build.workspace.channel;
-fp = new FilePath(channel, build.workspace.toString() + "/" + build.getEnvVars()["SCM_KEY"])
+            channel = build.workspace.channel;
+            fp = new FilePath(channel, build.workspace.toString() + "/" + build.getEnvVars()["SCM_KEY"])
 
-fp.write("SCM_USERNAME="+credentialInfo[0]+"\\nSCM_PASSWORD="+credentialInfo[1], null);
-
-'''){
+            fp.write("SCM_USERNAME="+credentialInfo[0]+"\\nSCM_PASSWORD="+credentialInfo[1], null);
+        ''')
+        {
             classpath('$WORKSPACE/job_dsl_additional_classpath/')
         }
-        dsl {
-            text('''import pluggable.scm.*;
+        shell('''
+            #!/bin/bash -ex
+            # We trust everywhere
+            echo -e "#!/bin/sh
+            exec ssh -i ${SCM_SSH_KEY} -o StrictHostKeyChecking=no \"\\\$@\"
+            " > ${WORKSPACE}/custom_ssh
+            chmod +x ${WORKSPACE}/custom_ssh
+            export GIT_SSH="${WORKSPACE}/custom_ssh"
+            # Clone Cartridge
+            echo "INFO: cloning ${CARTRIDGE_CLONE_URL}"
+            # we don't want to show the password
+            set +x
+            if ( [ ${CARTRIDGE_CLONE_URL%://*} == "https" ] ||  [ ${CARTRIDGE_CLONE_URL%://*} == "http" ] ) && [ -f ${WORKSPACE}/${SCM_KEY} ]; then
+                source ${WORKSPACE}/${SCM_KEY}
+                git clone ${CARTRIDGE_CLONE_URL%://*}://${SCM_USERNAME}:${SCM_PASSWORD}@${CARTRIDGE_CLONE_URL#*://} cartridge
+            else
+                git clone ${CARTRIDGE_CLONE_URL} cartridge
+            fi
+            set -x
+            # Find the cartridge
+            export CART_HOME=$(dirname $(find -name metadata.cartridge | head -1))
+            # Output SCM provider ID to a properties file
+            echo GIT_SSH="${GIT_SSH}" >> scm_provider.properties
+            # Provision one-time infrastructure
+            if [ -d ${WORKSPACE}/${CART_HOME}/infra ]; then
+                cd ${WORKSPACE}/${CART_HOME}/infra
+                if [ -f provision.sh ]; then
+                    source provision.sh
+                else
+                    echo "INFO: ${CART_HOME}/infra/provision.sh not found"
+                fi
+            fi
+            # Generate Jenkins Jobs
+            if [ -d ${WORKSPACE}/${CART_HOME}/jenkins/jobs ]; then
+                cd ${WORKSPACE}/${CART_HOME}/jenkins/jobs
+                if [ -f generate.sh ]; then
+                    source generate.sh
+                else
+                    echo "INFO: ${CART_HOME}/jenkins/jobs/generate.sh not found"
+                fi
+            fi
+        ''')
+        systemGroovyCommand('''
+            import jenkins.model.*
+            import groovy.io.FileType
 
-// Instantiate your SCM provider where your repos will be created
-SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
+            def jenkinsInstace = Jenkins.instance
+            def projectName = build.getEnvironment(listener).get('PROJECT_NAME')
+            def mcfile = new FileNameFinder().getFileNames(build.getWorkspace().toString(), '**/metadata.cartridge')
+            def xmlDir = new File(mcfile[0].substring(0, mcfile[0].lastIndexOf(File.separator))  + "/jenkins/jobs/xml")
 
-def workspace = "${WORKSPACE}"
-def projectFolderName = "${PROJECT_NAME}"
-def cartridgeFolder = "${CARTRIDGE_FOLDER}"
-def overwriteRepos = "${OVERWRITE_REPOS}"
-def scmNamespace = ''' + namespaceValue + '''
-def codeReviewEnabled = "${ENABLE_CODE_REVIEW}"
+            def fileList = []
 
-String repoNamespace = null;
+            xmlDir.eachFileRecurse (FileType.FILES) { file ->
+                if(file.name.endsWith('.xml')) {
+                    fileList << file
+                }
+            }
+            fileList.each {
+                String configPath = it.path
+                File configFile = new File(configPath)
+                String configXml = configFile.text
+                ByteArrayInputStream xmlStream = new ByteArrayInputStream( configXml.getBytes() )
+                String jobName = configFile.getName().substring(0, configFile.getName().lastIndexOf('.'))
 
-// Check if a custom SCM namespace has been provided
-if (scmNamespace != null && !scmNamespace.isEmpty()){
-  println("Custom SCM namespace specified...")
-  repoNamespace = scmNamespace
-} else {
-  // Check if a folder is specified
-  println("Custom SCM namespace not specified, using default project namespace...")
-  if (cartridgeFolder == ""){
-    println("Folder name not specified...")
-    repoNamespace = projectFolderName
-  } else {
-    println("Folder name specified, changing project namespace value..")
-    repoNamespace = projectFolderName + "/" + cartridgeFolder
-  }
-}
+                jenkinsInstace.getItem(projectName,jenkinsInstace).createProjectFromXML(jobName, xmlStream)
+            }
+        ''')
+        dsl
+        {
+            text('''
+                import pluggable.scm.*;
+                // Instantiate your SCM provider where your repos will be created
+                SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
 
-// Create your SCM repositories
-scmProvider.createScmRepos(workspace, repoNamespace, codeReviewEnabled, overwriteRepos)
+                def workspace = "${WORKSPACE}"
+                def projectFolderName = "${PROJECT_NAME}"
+                def cartridgeFolder = "${CARTRIDGE_FOLDER}"
+                def overwriteRepos = "${OVERWRITE_REPOS}"
+                def scmNamespace = ''' + namespaceValue + '''
+                def codeReviewEnabled = "${ENABLE_CODE_REVIEW}"
+
+                String repoNamespace = null;
+
+                // Check if a custom SCM namespace has been provided
+                if (scmNamespace != null && !scmNamespace.isEmpty()){
+                  println("Custom SCM namespace specified...")
+                  repoNamespace = scmNamespace
+                } else {
+                  // Check if a folder is specified
+                  println("Custom SCM namespace not specified, using default project namespace...")
+                  if (cartridgeFolder == ""){
+                    println("Folder name not specified...")
+                    repoNamespace = projectFolderName
+                  } else {
+                    println("Folder name specified, changing project namespace value..")
+                    repoNamespace = projectFolderName + "/" + cartridgeFolder
+                  }
+                }
+
+                // Create your SCM repositories
+                scmProvider.createScmRepos(workspace, repoNamespace, codeReviewEnabled, overwriteRepos)
             ''')
             additionalClasspath("job_dsl_additional_classpath/")
         }
         conditionalSteps {
             condition {
-                shell ('''#!/bin/bash
+                shell('''
+                    #!/bin/bash
+                    # Checking to see if folder is specified and project name needs to be updated
 
-# Checking to see if folder is specified and project name needs to be updated
-
-if [ -z ${CARTRIDGE_FOLDER} ] ; then
-    echo "Folder name not specified, moving on..."
-    exit 1
-else
-    echo "Folder name specified, changing project name value.."
-    exit 0
-fi
+                    if [ -z ${CARTRIDGE_FOLDER} ] ; then
+                        echo "Folder name not specified, moving on..."
+                        exit 1
+                    else
+                        echo "Folder name specified, changing project name value.."
+                        exit 0
+                    fi
                 ''')
             }
             runner('RunUnstable')
@@ -348,20 +358,19 @@ fi
                 }
                 dsl {
                     text('''// Creating folder to house the cartridge...
+                        def cartridgeFolderName = "${PROJECT_NAME}"
+                        def FolderDisplayName = "${FOLDER_DISPLAY_NAME}"
+                        if (FolderDisplayName=="") {
+                            println "Folder display name not specified, using folder name..."
+                            FolderDisplayName = "${CARTRIDGE_FOLDER}"
+                        }
+                        def FolderDescription = "${FOLDER_DESCRIPTION}"
+                        println("Creating folder: " + cartridgeFolderName + "...")
 
-def cartridgeFolderName = "${PROJECT_NAME}"
-def FolderDisplayName = "${FOLDER_DISPLAY_NAME}"
-if (FolderDisplayName=="") {
-    println "Folder display name not specified, using folder name..."
-    FolderDisplayName = "${CARTRIDGE_FOLDER}"
-}
-def FolderDescription = "${FOLDER_DESCRIPTION}"
-println("Creating folder: " + cartridgeFolderName + "...")
-
-def cartridgeFolder = folder(cartridgeFolderName) {
-  displayName(FolderDisplayName)
-  description(FolderDescription)
-}
+                        def cartridgeFolder = folder(cartridgeFolderName) {
+                          displayName(FolderDisplayName)
+                          description(FolderDescription)
+                        }
                     ''')
                 }
             }
