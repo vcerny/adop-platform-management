@@ -184,26 +184,27 @@ loadCartridgeJob.with{
     }
     steps
     {
-        shell('''#!/bin/bash -ex
-        # Create temp directory for repositories
-        mkdir ${WORKSPACE}/tmp
-        # Copy pluggable SCM package into workspace
-        mkdir ${WORKSPACE}/job_dsl_additional_classpath
-        cp -r ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable $WORKSPACE/job_dsl_additional_classpath
-        # Output SCM provider ID to a properties file
-        echo SCM_PROVIDER_ID=$(echo ${SCM_PROVIDER} | cut -d "(" -f2 | cut -d ")" -f1) > scm_provider_id.properties
+        shell('''
+            #!/bin/bash -ex
+            # Create temp directory for repositories
+            mkdir ${WORKSPACE}/tmp
+            # Copy pluggable SCM package into workspace
+            mkdir ${WORKSPACE}/job_dsl_additional_classpath
+            cp -r ${PLUGGABLE_SCM_PROVIDER_PATH}pluggable $WORKSPACE/job_dsl_additional_classpath
+            # Output SCM provider ID to a properties file
+            echo SCM_PROVIDER_ID=$(echo ${SCM_PROVIDER} | cut -d "(" -f2 | cut -d ")" -f1) > scm_provider_id.properties
         ''')
         environmentVariables
         {
             propertiesFile('scm_provider_id.properties')
         }
-        systemGroovyCommand('''import pluggable.scm.PropertiesSCMProviderDataStore
+        systemGroovyCommand('''
+            import pluggable.scm.PropertiesSCMProviderDataStore
             import pluggable.scm.SCMProviderDataStore
             import pluggable.configuration.EnvVarProperty;
             import pluggable.scm.helpers.HelperUtils
             import java.util.Properties
             import hudson.FilePath
-
 
             String scmProviderId = build.getEnvironment(listener).get('SCM_PROVIDER_ID')
             EnvVarProperty envVarProperty = EnvVarProperty.getInstance();
