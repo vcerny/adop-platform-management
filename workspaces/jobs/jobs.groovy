@@ -54,8 +54,8 @@ generateProjectJob.with {
         shell('''#!/bin/bash
                 # Validate Variables
                 pattern=" |'"
-                if [[ "${WORKSPACE_NAME}" =~ ${pattern} ]]; then
-                    echo "WORKSPACE_NAME contains a space, please replace with an underscore - exiting..."
+                if [[ "${PROJECT_NAME}" =~ ${pattern} ]]; then
+                    echo "PROJECT_NAME contains a space, please replace with an underscore - exiting..."
                     exit 1
                 fi''')
         conditionalSteps
@@ -106,7 +106,7 @@ generateProjectJob.with {
 		
         dsl
         {
-            external("workspaces/jobs/**/*.groovy")
+            external("projects/jobs/**/*.groovy")
         }
     }
     scm
