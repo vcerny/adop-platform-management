@@ -6,7 +6,8 @@ generateLoadCartridgeJob.with {
     {
         stringParam("WORKSPACE_NAME","ExampleWorkspace","Name of the workspace to load cartridge in (either existing or new).")
         stringParam("PROJECT_NAME","ExampleProject","Name of the project to load cartridge in (either existing or new).")
-        booleanParam("CUSTOM_SCM_NAMESPACE", false, 'Enables the option to provide a custom project namespace for your SCM provider')
+        booleanParam("CUSTOM_SCM_NAMESPACE", false, "Enables the option to provide a custom project namespace for your SCM provider")
+        stringParam("SCM_NAMESPACE", "", "The namespace for your SCM provider which will prefix your created repositories.")
         activeChoiceParam('SCM_PROVIDER') {
             description('Your chosen SCM Provider and the appropriate cloning protocol')
             filterable()
@@ -167,7 +168,7 @@ generateLoadCartridgeJob.with {
                     build job: "${WORKSPACE_NAME}/Project_Management/Generate_Project", parameters: [[$class: 'StringParameterValue', name: 'PROJECT_NAME', value: "${PROJECT_NAME}"], [$class: 'StringParameterValue', name: 'CUSTOM_SCM_NAMESPACE', value: "${CUSTOM_SCM_NAMESPACE}"]]
                     retry(5)
                     {
-                        build job: "${WORKSPACE_NAME}/${PROJECT_NAME}/Cartridge_Management/Load_Cartridge", parameters: [[$class: 'StringParameterValue', name: 'CARTRIDGE_FOLDER', value: "${CARTRIDGE_FOLDER}"], [$class: 'StringParameterValue', name: 'FOLDER_DISPLAY_NAME', value: "${FOLDER_DISPLAY_NAME}"], [$class: 'StringParameterValue', name: 'FOLDER_DESCRIPTION', value: "${FOLDER_DESCRIPTION}"], [$class: 'StringParameterValue', name: 'CARTRIDGE_CLONE_URL', value: "${CARTRIDGE_CLONE_URL}"]]
+                        build job: "${WORKSPACE_NAME}/${PROJECT_NAME}/Cartridge_Management/Load_Cartridge", parameters: [[$class: 'StringParameterValue', name: 'CARTRIDGE_FOLDER', value: "${CARTRIDGE_FOLDER}"], [$class: 'StringParameterValue', name: 'FOLDER_DISPLAY_NAME', value: "${FOLDER_DISPLAY_NAME}"], [$class: 'StringParameterValue', name: 'FOLDER_DESCRIPTION', value: "${FOLDER_DESCRIPTION}"], [$class: 'StringParameterValue', name: 'CARTRIDGE_CLONE_URL', value: "${CARTRIDGE_CLONE_URL}"], [$class: 'StringParameterValue', name: 'SCM_NAMESPACE', value: "${SCM_NAMESPACE}"]]
                     }''')
             sandbox()
         }
