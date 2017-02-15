@@ -89,9 +89,6 @@ generateLoadCartridgeJob.with {
             choiceListProvider {
                 systemGroovyChoiceListProvider {
                     scriptText('''
-              @Grab('org.yaml:snakeyaml:1.17')
-              import org.yaml.snakeyaml.Yaml
-              import org.yaml.snakeyaml.parser.ParserException
               import jenkins.model.*
               nodes = Jenkins.instance.globalNodeProperties
               nodes.getAll(hudson.slaves.EnvironmentVariablesNodeProperty.class)
@@ -109,19 +106,16 @@ generateLoadCartridgeJob.with {
               URLS.split(';').each{ source_url ->
                 try {
                   def html = source_url.toURL().text;
-                  Yaml parser = new Yaml();
-                  LinkedHashMap yaml = parser.load(html);
-                  yaml.each{ key, cartridge ->
-                    cartridge_urls.add(cartridge.url)
+                  html.eachLine { line ->
+                    if (line.contains("url:")) {
+                      def url = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\""))
+                      cartridge_urls.add(url)
+                    }
                   }
                 }
                 catch (UnknownHostException e) {
                   cartridge_urls.add("[ERROR] Provided URL was not found: ${source_url}");
                   println "[ERROR] Provided URL was not found: ${source_url}";
-                }
-                catch (ParserException e) {
-                  cartridge_urls.add("[ERROR] Provided URL has invalid YAML: ${source_url}");
-                  println "[ERROR] Provided URL has invalid YAML: ${source_url}";
                 }
                 catch (Exception e) {
                   cartridge_urls.add("[ERROR] Unknown error while processing: ${source_url}");
