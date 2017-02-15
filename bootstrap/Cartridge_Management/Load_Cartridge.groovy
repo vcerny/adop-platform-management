@@ -4,9 +4,9 @@ def generateLoadCartridgeJob = workflowJob("/Load_Cartridge")
 generateLoadCartridgeJob.with {
     parameters
     {
-        stringParam("workspaceName","ExampleWorkspace","Name of the workspace to load cartridge in (either existing or new).")
-        stringParam("projectName","ExampleProject","Name of the project to load cartridge in (either existing or new).")
-        booleanParam('CUSTOM_SCM_NAMESPACE', false, 'Enables the option to provide a custom project namespace for your SCM provider')
+        stringParam("WORKSPACE_NAME","ExampleWorkspace","Name of the workspace to load cartridge in (either existing or new).")
+        stringParam("PROJECT_NAME","ExampleProject","Name of the project to load cartridge in (either existing or new).")
+        booleanParam("CUSTOM_SCM_NAMESPACE", false, 'Enables the option to provide a custom project namespace for your SCM provider')
         activeChoiceParam('SCM_PROVIDER') {
             description('Your chosen SCM Provider and the appropriate cloning protocol')
             filterable()
@@ -128,7 +128,7 @@ generateLoadCartridgeJob.with {
                 }
               }
               return cartridge_urls;
-             ''')
+''')
                     defaultChoice('Top')
                     usePredefinedVariables(false)
                 }
@@ -161,13 +161,13 @@ generateLoadCartridgeJob.with {
         cps
         {
             script('''// Setup Workspace
-                    build job: 'Workspace_Management/Generate_Workspace', parameters: [[$class: 'StringParameterValue', name: 'WORKSPACE_NAME', value: "${workspaceName}"]]
+                    build job: 'Workspace_Management/Generate_Workspace', parameters: [[$class: 'StringParameterValue', name: 'WORKSPACE_NAME', value: "${WORKSPACE_NAME}"]]
 
                     // Setup Faculty
-                    build job: "${workspaceName}/Project_Management/Generate_Project", parameters: [[$class: 'StringParameterValue', name: 'PROJECT_NAME', value: "${projectName}"]]
+                    build job: "${WORKSPACE_NAME}/Project_Management/Generate_Project", parameters: [[$class: 'StringParameterValue', name: 'PROJECT_NAME', value: "${PROJECT_NAME}"], [$class: 'BooleanParameterValue', name: 'CUSTOM_SCM_NAMESPACE', value: "${CUSTOM_SCM_NAMESPACE}"]]
                     retry(5)
                     {
-                        build job: "${workspaceName}/${projectName}/Cartridge_Management/Load_Cartridge", parameters: [[$class: 'StringParameterValue', name: 'CARTRIDGE_FOLDER', value: "${CARTRIDGE_FOLDER}"], [$class: 'StringParameterValue', name: 'FOLDER_DISPLAY_NAME', value: "${FOLDER_DISPLAY_NAME}"], [$class: 'StringParameterValue', name: 'FOLDER_DESCRIPTION', value: "${FOLDER_DESCRIPTION}"], [$class: 'StringParameterValue', name: 'CARTRIDGE_CLONE_URL', value: "${CARTRIDGE_CLONE_URL}"]]
+                        build job: "${WORKSPACE_NAME}/${PROJECT_NAME}/Cartridge_Management/Load_Cartridge", parameters: [[$class: 'StringParameterValue', name: 'CARTRIDGE_FOLDER', value: "${CARTRIDGE_FOLDER}"], [$class: 'StringParameterValue', name: 'FOLDER_DISPLAY_NAME', value: "${FOLDER_DISPLAY_NAME}"], [$class: 'StringParameterValue', name: 'FOLDER_DESCRIPTION', value: "${FOLDER_DESCRIPTION}"], [$class: 'StringParameterValue', name: 'CARTRIDGE_CLONE_URL', value: "${CARTRIDGE_CLONE_URL}"]]
                     }''')
             sandbox()
         }
