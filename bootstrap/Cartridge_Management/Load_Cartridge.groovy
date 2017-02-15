@@ -164,7 +164,7 @@ generateLoadCartridgeJob.with {
                     build job: 'Workspace_Management/Generate_Workspace', parameters: [[$class: 'StringParameterValue', name: 'WORKSPACE_NAME', value: "${WORKSPACE_NAME}"]]
 
                     // Setup Faculty
-                    build job: "${WORKSPACE_NAME}/Project_Management/Generate_Project", parameters: [[$class: 'StringParameterValue', name: 'PROJECT_NAME', value: "${PROJECT_NAME}"], [$class: 'BooleanParameterValue', name: 'CUSTOM_SCM_NAMESPACE', value: "${CUSTOM_SCM_NAMESPACE}"]]
+                    build job: "${WORKSPACE_NAME}/Project_Management/Generate_Project", parameters: [[$class: 'StringParameterValue', name: 'PROJECT_NAME', value: "${PROJECT_NAME}"], [$class: 'StringParameterValue', name: 'CUSTOM_SCM_NAMESPACE', value: "${CUSTOM_SCM_NAMESPACE}"]]
                     retry(5)
                     {
                         build job: "${WORKSPACE_NAME}/${PROJECT_NAME}/Cartridge_Management/Load_Cartridge", parameters: [[$class: 'StringParameterValue', name: 'CARTRIDGE_FOLDER', value: "${CARTRIDGE_FOLDER}"], [$class: 'StringParameterValue', name: 'FOLDER_DISPLAY_NAME', value: "${FOLDER_DISPLAY_NAME}"], [$class: 'StringParameterValue', name: 'FOLDER_DESCRIPTION', value: "${FOLDER_DESCRIPTION}"], [$class: 'StringParameterValue', name: 'CARTRIDGE_CLONE_URL', value: "${CARTRIDGE_CLONE_URL}"]]
