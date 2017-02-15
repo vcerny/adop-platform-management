@@ -1,7 +1,5 @@
 // Constants
-def gerritBaseUrl = "ssh://jenkins@gerrit:29418"
-def cartridgeBaseUrl = gerritBaseUrl + "/cartridges"
-def platformToolsGitUrl = gerritBaseUrl + "/platform-management"
+def platformToolsGitUrl = "https://github.com/IrmantasM/adop-platform-management.git"
 def scmPropertiesPath = "${PLUGGABLE_SCM_PROVIDER_PROPERTIES_PATH}"
 
 // Folders
@@ -382,16 +380,6 @@ def cartridgeFolder = folder(cartridgeFolderName) {
             additionalClasspath("job_dsl_additional_classpath")
         }
         shell('rm -f $WORKSPACE/$SCM_KEY')
-    }
-    scm {
-        git {
-            remote {
-                name("origin")
-                url("${platformToolsGitUrl}")
-                credentials("adop-jenkins-master")
-            }
-            branch("*/master")
-        }
     }
 }
 
