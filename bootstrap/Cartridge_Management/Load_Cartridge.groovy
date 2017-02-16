@@ -2,6 +2,7 @@
 def generateLoadCartridgeJob = workflowJob("/Load_Cartridge")
 
 generateLoadCartridgeJob.with {
+	label("master")
     parameters
     {
         stringParam("WORKSPACE_NAME","ExampleWorkspace","Name of the workspace to load cartridge in (either existing or new).")
