@@ -137,14 +137,14 @@ generateLoadCartridgeJob.with {
         booleanParam('ENABLE_CODE_REVIEW', false, 'Enables Gerrit Code Reviewing for the selected cartridge')
         booleanParam('OVERWRITE_REPOS', false, 'If ticked, existing code repositories (previously loaded by the cartridge) will be overwritten. For first time cartridge runs, this property is redundant and will perform the same behavior regardless.')
 		activeChoiceParam('Execute on master') {
-			description('This is here just so that there are executors on the master')
+			description('This is to make sure there are executors on master node')
 			choiceType('SINGLE_SELECT')
 			groovyScript {
 				script('''
 					|import hudson.model.*
 					|
 					|Hudson hudson = Hudson.getInstance()
-					|hudson.setNumExecutors(1)
+					|hudson.setNumExecutors(2)
 					|hudson.setNodes(hudson.getNodes())
 					'''.stripMargin())
 			}
@@ -157,6 +157,7 @@ generateLoadCartridgeJob.with {
     {
         preBuildCleanup()
         injectPasswords()
+		label('master')
         maskPasswords()
         sshAgent("adop-jenkins-master")
         credentialsBinding {
