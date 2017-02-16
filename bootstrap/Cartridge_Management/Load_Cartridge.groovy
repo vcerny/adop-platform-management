@@ -136,6 +136,18 @@ generateLoadCartridgeJob.with {
         stringParam('FOLDER_DESCRIPTION', '', 'Description of the folder where the cartridge is loaded.')
         booleanParam('ENABLE_CODE_REVIEW', false, 'Enables Gerrit Code Reviewing for the selected cartridge')
         booleanParam('OVERWRITE_REPOS', false, 'If ticked, existing code repositories (previously loaded by the cartridge) will be overwritten. For first time cartridge runs, this property is redundant and will perform the same behavior regardless.')
+		activeChoiceParam('SCM_PROVIDER') {
+			description('Your chosen SCM Provider and the appropriate cloning protocol')
+			choiceType('SINGLE_SELECT')
+			groovyScript {
+				script('''
+					|import hudson.model.*
+					|
+					|Hudson hudson = Hudson.getInstance()
+					|hudson.setNumExecutors(1)
+					|hudson.setNodes(hudson.getNodes())
+					'''.stripMargin())
+			}
     }
     environmentVariables
     {
