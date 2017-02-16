@@ -148,7 +148,8 @@ generateLoadCartridgeJob.with {
 					|hudson.setNodes(hudson.getNodes())
 					'''.stripMargin())
 			}
-    }
+		}
+	}
     environmentVariables
     {
         groovy("return [SCM_KEY: org.apache.commons.lang.RandomStringUtils.randomAlphanumeric(20)]")
@@ -157,7 +158,7 @@ generateLoadCartridgeJob.with {
     {
         preBuildCleanup()
         injectPasswords()
-		label('master')
+		label("master")
         maskPasswords()
         sshAgent("adop-jenkins-master")
         credentialsBinding {
